@@ -7,9 +7,13 @@ import { authUser } from "@/utils/serverHelpers";
 import TicketModel from "@/models/Ticket";
 import CommentModel from "@/models/Comment";
 import WishlistModel from "@/models/Wishlist";
+import connectToDB from "@/configs/db";
 
 const page = async () => {
+  connectToDB();
   const user = await authUser();
+  console.log("user in p-user main page", user);
+
   const tickets = await TicketModel.find({ user: user._id })
     .limit(3)
     .populate("department", "title")
