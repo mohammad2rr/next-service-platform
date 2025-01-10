@@ -1,7 +1,7 @@
 @import url("../../../styles/_colorVariables.css");
 .navbar main,
 .navbar_fixed main {
-  background: var(--purple);
+  background: var(--main-three-gold);
   border-radius: 10px;
   transition: background-color 0.2s ease;
   box-shadow: 0 1px 8px rgba(0, 0, 0, 0.1);
@@ -35,7 +35,7 @@
   left: 0;
   width: 100%;
   top: 0;
-  background: var(--purple);
+  background: var(--main-three-gold);
   z-index: 999;
 }
 @keyframes fadeInDownBig {
