@@ -5,7 +5,7 @@
 @import url("primereact/resources/primereact.min.css");
 @import url("primeicons/primeicons.css");
 @import url("primeflex/primeflex.css");
-/* @import url("../styles/bootstrap.min.css"); */
+@import url("../styles/bootstrap-grid.min.css");
 
 @font-face {
   font-family: shabnam;
