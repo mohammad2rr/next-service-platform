@@ -53,18 +53,21 @@ const Register = ({ showloginForm }) => {
     });
 
     if (res.status === 201) {
-      showSwal("ثبت نام با موفقیت انجام شد", "success", "فهمیدم");
-
       const resInfo = await res.json();
-
-      if (resInfo.user.role === roles.USER) {
-        router.replace("/p-user");
-        return;
-      }
-      if (resInfo.user.role === roles.ADMIN) {
-        router.replace("/p-admin");
-        return;
-      }
+      swal({
+        title: "ثبت نام با موفقیت انجام شد",
+        icon: "success",
+        buttons: "ورود به پنل ",
+      }).then(() => {
+        if (resInfo.user.role === roles.USER) {
+          router.replace("/p-user");
+          return;
+        }
+        if (resInfo.user.role === roles.ADMIN) {
+          router.replace("/p-admin");
+          return;
+        }
+      });
     } else if (res.status === 422) {
       showSwal("کاربری با این اطلاعات از قبل وجود دارد", "error", "تلاش مجدد");
     }
