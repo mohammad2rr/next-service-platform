@@ -4,10 +4,13 @@
   height: 100vh;
   overflow: hidden;
   width: 100%;
-  background-color: var(--currentline);
+  /* background-color: var(--currentline);*/
+  background-color: var(--register-login-bg);
   background-size: cover;
   background-attachment: fixed;
   display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .form_bg {

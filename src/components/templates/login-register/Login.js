@@ -109,11 +109,11 @@ const Login = ({ showRegisterForm }) => {
             <button onClick={showRegisterForm} className={styles.btn_light}>
               ثبت نام
             </button>
-          </div>
 
-          <Link href={"/"} className={styles.redirect_to_home}>
-            لغو
-          </Link>
+            <Link href={"/"} className={styles.redirect_to_home}>
+              لغو
+            </Link>
+          </div>
         </>
       ) : (
         <Sms hideCodeForm={hideCodeForm} phone={phoneOrEmail} />

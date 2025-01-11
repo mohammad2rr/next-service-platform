@@ -1,4 +1,6 @@
 import { useState } from "react";
+import Link from "next/link";
+
 import styles from "./register.module.css";
 import Sms from "./Sms";
 import swal from "sweetalert";
@@ -162,8 +164,10 @@ const Register = ({ showloginForm }) => {
             <p onClick={showloginForm} className={styles.back_to_login}>
               برگشت به ورود
             </p>
+            <Link href={"/"} className={styles.redirect_to_home}>
+              لغو
+            </Link>
           </div>
-          <p className={styles.redirect_to_home}>لغو</p>
         </>
       ) : (
         <Sms hideOtpForm={hideOtpForm} phone={phone} />
