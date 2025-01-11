@@ -25,13 +25,14 @@
 }
 
 body::-webkit-scrollbar {
-  width: 10px;
-  background-color: #fff !important;
-  border-radius: 6px !important;
+  /*width: 12px;*/
+  background-color: #333c4c !important;
+  /*border-radius: 2px !important;*/
 }
 
 body::-webkit-scrollbar-thumb {
-  background-color: #711d1c !important;
+  background-color: #4a4b6d !important;
+  border-radius: 5px !important;
 }
 
 html,
