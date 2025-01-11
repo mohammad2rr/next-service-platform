@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+require("./ProductSubCategory");
 require("./Comment");
 
 const schema = new mongoose.Schema({
@@ -49,6 +50,11 @@ const schema = new mongoose.Schema({
         ref: "Comment",
       },
     ],
+  },
+  subCategory: {
+    type: mongoose.Types.ObjectId,
+    ref: "ProductSubCategory",
+    required: true,
   },
 });
 
