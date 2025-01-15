@@ -12,6 +12,7 @@
     "aos": "^2.3.4",
     "bcryptjs": "^2.4.3",
     "bootstrap": "^5.3.3",
+    "formik": "^2.4.6",
     "jsonwebtoken": "^9.0.2",
     "leaflet": "^1.9.4",
     "mongoose": "^8.9.2",
@@ -28,6 +29,7 @@
     "recharts": "^2.15.0",
     "request": "^2.88.2",
     "sweetalert": "^2.1.2",
-    "swiper": "^11.1.15"
+    "swiper": "^11.1.15",
+    "yup": "^1.6.1"
   }
 }
