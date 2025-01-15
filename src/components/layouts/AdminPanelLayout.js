@@ -19,7 +19,16 @@ const Layout = async ({ children }) => {
   return (
     <div className={styles.layout}>
       <section className={styles.section}>
-        <Sidebar />
+        <Sidebar
+          authenticatedUser={JSON.parse(
+            JSON.stringify({
+              name: user.name,
+              email: user.email,
+              phone: user.phone,
+              role: user.role,
+            })
+          )}
+        />
         <div className={styles.contents}>
           <Topbar />
           {children}

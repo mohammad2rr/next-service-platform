@@ -9,7 +9,9 @@ import { TbListDetails } from "react-icons/tb";
 import Link from "next/link";
 import swal from "sweetalert";
 
-const Sidebar = () => {
+const Sidebar = ({ authenticatedUser }) => {
+  console.log("authenticatedUser", authenticatedUser);
+
   const path = usePathname();
   const router = useRouter();
 
@@ -74,6 +76,15 @@ const Sidebar = () => {
             <Link href={"/p-admin"} className={styles.sidebar_link_active}>
               <ImReply />
               پیشخوان
+            </Link>
+
+            <Link href={"/p-admin/products-category"}>
+              <FaShoppingBag />
+              دسته بندی محصولات
+            </Link>
+            <Link href={"/p-admin/products-subCategory"}>
+              <FaShoppingBag />
+              زیر دسته محصولات
             </Link>
 
             <Link href={"/p-admin/products"}>
