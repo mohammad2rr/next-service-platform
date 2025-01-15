@@ -19,18 +19,6 @@ const schema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  weight: {
-    type: Number,
-    required: true,
-  },
-  suitableFor: {
-    type: String,
-    required: true,
-  },
-  smell: {
-    type: String,
-    required: true,
-  },
   score: {
     type: Number,
     default: 5,

@@ -12,12 +12,8 @@ export async function POST(req) {
     const price = formData.get("price");
     const shortDescription = formData.get("shortDescription");
     const longDescription = formData.get("longDescription");
-    const weight = formData.get("weight");
-    const suitableFor = formData.get("suitableFor");
-    const smell = formData.get("smell");
     const tags = formData.get("tags");
     const img = formData.get("img");
-
     const buffer = Buffer.from(await img.arrayBuffer());
     const filename = Date.now() + img.name;
     const imgPath = path.join(process.cwd(), "public/uploads/" + filename);
@@ -29,9 +25,6 @@ export async function POST(req) {
       price,
       shortDescription,
       longDescription,
-      weight,
-      suitableFor,
-      smell,
       tags,
       img: `http://localhost:3000/uploads/${filename}`,
     });
