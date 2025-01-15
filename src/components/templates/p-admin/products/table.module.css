@@ -273,3 +273,7 @@
   color: white;
   background-color: red;
 }
+
+.error {
+  color: red;
+}
