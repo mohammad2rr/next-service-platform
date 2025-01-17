@@ -12,6 +12,7 @@
     "aos": "^2.3.4",
     "bcryptjs": "^2.4.3",
     "bootstrap": "^5.3.3",
+    "busboy": "^1.6.0",
     "formidable": "^3.5.2",
     "formik": "^2.4.6",
     "jsonwebtoken": "^9.0.2",

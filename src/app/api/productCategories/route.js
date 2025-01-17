@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
+import { pipeline } from "stream";
+import { promisify } from "util";
+import Busboy from "busboy";
 import ProductCategoryModel from "@/models/ProductCategory";
-import { IncomingForm } from "formidable";
+
+const pump = promisify(pipeline);
 
 export const config = {
   api: {
@@ -11,48 +15,64 @@ export const config = {
 };
 
 export async function POST(req) {
-  try {
-    const form = new IncomingForm({
-      uploadDir: path.join(process.cwd(), "public/uploads/"),
-      keepExtensions: true,
-      filename: (name, ext, part) => {
-        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-        return `${uniqueSuffix}-${part.originalFilename}`;
-      },
-    });
+  return new Promise((resolve, reject) => {
+    const busboy = new Busboy({ headers: req.headers });
+    const uploadsDir = path.join(process.cwd(), "public/uploads/");
+    const formData = {};
 
-    const { fields, files } = await new Promise((resolve, reject) => {
-      form.parse(req, (err, fields, files) => {
-        if (err) reject(err);
-        resolve({ fields, files });
-      });
-    });
-
-    const { title, description } = fields;
-    const img = files.img;
-
-    // Validate required fields
-    if (!title) {
-      return NextResponse.json(
-        { message: "Title is required!" },
-        { status: 400 }
-      );
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
     }
 
-    const category = await ProductCategoryModel.create({
-      title,
-      description,
-      img: img ? `/uploads/${path.basename(img.filepath)}` : null, // Save relative path for serving
+    busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      const saveTo = path.join(uploadsDir, uniqueSuffix + "-" + filename);
+      formData[fieldname] = `/uploads/${uniqueSuffix}-${filename}`;
+
+      const writeStream = fs.createWriteStream(saveTo);
+      pump(file, writeStream).catch((err) => reject(err));
     });
 
-    return NextResponse.json(
-      { message: "Category created successfully!", data: category },
-      { status: 201 }
-    );
-  } catch (err) {
-    console.error("Error creating category:", err);
-    return NextResponse.json({ message: err.message }, { status: 500 });
-  }
+    busboy.on("field", (fieldname, val) => {
+      formData[fieldname] = val;
+    });
+
+    busboy.on("finish", async () => {
+      try {
+        const { title, description, img } = formData;
+
+        // Validate required fields
+        if (!title) {
+          resolve(
+            NextResponse.json(
+              { message: "Title is required!" },
+              { status: 400 }
+            )
+          );
+          return;
+        }
+
+        const category = await ProductCategoryModel.create({
+          title,
+          description,
+          img: img || null, // Save relative path for serving
+        });
+
+        resolve(
+          NextResponse.json(
+            { message: "Category created successfully!", data: category },
+            { status: 201 }
+          )
+        );
+      } catch (err) {
+        console.error("Error creating category:", err);
+        reject(NextResponse.json({ message: err.message }, { status: 500 }));
+      }
+    });
+
+    busboy.on("error", (err) => reject(err));
+    req.body.pipe(busboy);
+  });
 }
 
 // PUT Handler for updating a category's image
