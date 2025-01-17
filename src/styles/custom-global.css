@@ -1,3 +1,10 @@
 .p-button {
   padding: 0.5rem 1rem !important;
 }
+
+.p-accordion .p-accordion-header .p-accordion-header-link {
+  padding: 1rem !important;
+  border-radius: 3px !important;
+  background: #f8f9fa !important;
+  color: #495057 !important;
+}
