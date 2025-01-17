@@ -15,6 +15,8 @@ function AddProductSubCategory() {
     async function fetchCategories() {
       const res = await fetch("/api/productCategories");
       const data = await res.json();
+      console.log("productCategories", data);
+
       setCategories(data);
     }
     fetchCategories();
