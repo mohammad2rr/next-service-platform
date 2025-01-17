@@ -1,132 +1,123 @@
-import { NextResponse } from "next/server";
-import path from "path";
-import fs from "fs";
-import { pipeline } from "stream";
-import { promisify } from "util";
-import Busboy from "busboy";
+import connectToDB from "@/configs/db";
 import ProductCategoryModel from "@/models/ProductCategory";
-
-const pump = promisify(pipeline);
+import { writeFile } from "fs/promises";
+import path from "path";
 
 export const config = {
   api: {
-    bodyParser: false, // Disable built-in body parser for file upload
+    bodyParser: false, // Disable built-in body parser to handle form data manually
   },
 };
 
+// POST: Create a new product category with file upload
 export async function POST(req) {
-  return new Promise((resolve, reject) => {
-    const busboy = new Busboy({ headers: req.headers });
-    const uploadsDir = path.join(process.cwd(), "public/uploads/");
-    const formData = {};
+  try {
+    // Connect to the database
+    connectToDB();
 
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
+    // Parse the form data
+    const formData = await req.formData();
+    const title = formData.get("title");
+    const description = formData.get("description");
+    const img = formData.get("img");
+
+    // Validate required fields
+    if (!title) {
+      return Response.json({ message: "Title is required!" }, { status: 400 });
     }
 
-    busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      const saveTo = path.join(uploadsDir, uniqueSuffix + "-" + filename);
-      formData[fieldname] = `/uploads/${uniqueSuffix}-${filename}`;
+    let imgPath = null;
 
-      const writeStream = fs.createWriteStream(saveTo);
-      pump(file, writeStream).catch((err) => reject(err));
+    // Process the image if provided
+    if (img) {
+      const buffer = Buffer.from(await img.arrayBuffer());
+      const filename = `${Date.now()}-${img.name}`;
+      imgPath = path.join(process.cwd(), "public/uploads/", filename);
+
+      // Save the image to the uploads directory
+      await writeFile(imgPath, buffer);
+      imgPath = `/uploads/${filename}`; // Use relative path for serving
+    }
+
+    // Save the category to the database
+    const category = await ProductCategoryModel.create({
+      title,
+      description,
+      img: imgPath,
     });
 
-    busboy.on("field", (fieldname, val) => {
-      formData[fieldname] = val;
-    });
-
-    busboy.on("finish", async () => {
-      try {
-        const { title, description, img } = formData;
-
-        // Validate required fields
-        if (!title) {
-          resolve(
-            NextResponse.json(
-              { message: "Title is required!" },
-              { status: 400 }
-            )
-          );
-          return;
-        }
-
-        const category = await ProductCategoryModel.create({
-          title,
-          description,
-          img: img || null, // Save relative path for serving
-        });
-
-        resolve(
-          NextResponse.json(
-            { message: "Category created successfully!", data: category },
-            { status: 201 }
-          )
-        );
-      } catch (err) {
-        console.error("Error creating category:", err);
-        reject(NextResponse.json({ message: err.message }, { status: 500 }));
-      }
-    });
-
-    busboy.on("error", (err) => reject(err));
-    req.body.pipe(busboy);
-  });
+    // Return success response
+    return Response.json(
+      { message: "Category created successfully!", data: category },
+      { status: 201 }
+    );
+  } catch (err) {
+    console.error("Error creating category:", err);
+    return Response.json({ message: err.message }, { status: 500 });
+  }
 }
 
-// PUT Handler for updating a category's image
+// PUT: Update the image of an existing product category
 export async function PUT(req) {
   try {
-    const form = new Promise((resolve, reject) => {
-      upload.single("img")(req, {}, (err) => {
-        if (err) return reject(err);
-        resolve(req);
-      });
-    });
+    // Parse the form data
+    const formData = await req.formData();
+    const id = formData.get("id");
+    const img = formData.get("img");
 
-    await form;
-    const img = req.file;
-    const { id } = req.body;
-
+    // Validate required fields
     if (!id) {
-      return NextResponse.json(
+      return Response.json(
         { message: "Category ID is required!" },
         { status: 400 }
       );
     }
 
+    if (!img) {
+      return Response.json({ message: "No image provided!" }, { status: 400 });
+    }
+
+    // Find the category in the database
     const category = await ProductCategoryModel.findById(id);
 
     if (!category) {
-      return NextResponse.json(
-        { message: "Category not found!" },
-        { status: 404 }
-      );
+      return Response.json({ message: "Category not found!" }, { status: 404 });
     }
 
-    if (img) {
-      category.img = `/uploads/${img.filename}`;
-      await category.save();
-    }
+    // Process the new image
+    const buffer = Buffer.from(await img.arrayBuffer());
+    const filename = `${Date.now()}-${img.name}`;
+    const imgPath = path.join(process.cwd(), "public/uploads/", filename);
 
-    return NextResponse.json(
-      { message: "Category updated successfully!", data: category },
+    // Save the new image
+    await writeFile(imgPath, buffer);
+
+    // Update the category image
+    category.img = `/uploads/${filename}`;
+    await category.save();
+
+    // Return success response
+    return Response.json(
+      { message: "Category image updated successfully!", data: category },
       { status: 200 }
     );
   } catch (err) {
-    console.error("Error updating category:", err);
-    return NextResponse.json({ message: err.message }, { status: 500 });
+    console.error("Error updating category image:", err);
+    return Response.json({ message: err.message }, { status: 500 });
   }
 }
 
-// GET Handler for fetching all categories
+// GET: Retrieve all product categories
 export async function GET() {
   try {
+    // Connect to the database and fetch categories
+    connectToDB();
     const categories = await ProductCategoryModel.find({}, "-__v");
-    return NextResponse.json(categories, { status: 200 });
+
+    // Return categories in the response
+    return Response.json(categories, { status: 200 });
   } catch (err) {
     console.error("Error fetching categories:", err);
-    return NextResponse.json({ message: err.message }, { status: 500 });
+    return Response.json({ message: err.message }, { status: 500 });
   }
 }

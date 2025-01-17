@@ -1,131 +1,134 @@
 import connectToDB from "@/configs/db";
 import ProductSubCategoryModel from "@/models/ProductSubCategory";
-import multer from "multer";
+import { writeFile } from "fs/promises";
 import path from "path";
-import { NextResponse } from "next/server";
 
-// Set up Multer for file upload
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, path.join(process.cwd(), "public/uploads/"));
-    },
-    filename: function (req, file, cb) {
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      cb(null, uniqueSuffix + "-" + file.originalname);
-    },
-  }),
-  fileFilter: function (req, file, cb) {
-    const allowedMimeTypes = ["image/jpeg", "image/png", "image/jpg"];
-    if (allowedMimeTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error("Invalid file type. Only JPEG and PNG are allowed."));
-    }
-  },
-});
-
-// Middleware to handle multipart form-data
 export const config = {
   api: {
-    bodyParser: false, // Disable built-in body parser for file upload
+    bodyParser: false, // Disable built-in body parser to handle form data manually
   },
 };
 
-// POST Handler for creating a subcategory
+// POST: Create a new product subcategory with file upload
 export async function POST(req) {
   try {
-    const form = new Promise((resolve, reject) => {
-      upload.single("img")(req, {}, (err) => {
-        if (err) return reject(err);
-        resolve(req);
-      });
-    });
+    // Connect to the database
+    connectToDB();
 
-    await form;
-    const { title, description, productCategory } = req.body;
-    const img = req.file;
+    // Parse the form data
+    const formData = await req.formData();
+    const title = formData.get("title");
+    const description = formData.get("description");
+    const productCategory = formData.get("productCategory");
+    const img = formData.get("img");
 
     // Validate required fields
     if (!title || !productCategory) {
-      return NextResponse.json(
+      return Response.json(
         { message: "Title and product category are required!" },
         { status: 400 }
       );
     }
 
+    let imgPath = null;
+
+    // Process the image if provided
+    if (img) {
+      const buffer = Buffer.from(await img.arrayBuffer());
+      const filename = `${Date.now()}-${img.name}`;
+      imgPath = path.join(process.cwd(), "public/uploads/", filename);
+
+      // Save the image to the uploads directory
+      await writeFile(imgPath, buffer);
+      imgPath = `/uploads/${filename}`; // Use relative path for serving
+    }
+
+    // Save the subcategory to the database
     const subCategory = await ProductSubCategoryModel.create({
       title,
       description,
       productCategory,
-      img: img ? `/uploads/${img.filename}` : null, // Save relative path for serving
+      img: imgPath,
     });
 
-    return NextResponse.json(
+    // Return success response
+    return Response.json(
       { message: "Subcategory created successfully!", data: subCategory },
       { status: 201 }
     );
   } catch (err) {
     console.error("Error creating subcategory:", err);
-    return NextResponse.json({ message: err.message }, { status: 500 });
+    return Response.json({ message: err.message }, { status: 500 });
   }
 }
 
-// PUT Handler for updating a subcategory's image
+// PUT: Update the image of an existing product subcategory
 export async function PUT(req) {
   try {
-    const form = new Promise((resolve, reject) => {
-      upload.single("img")(req, {}, (err) => {
-        if (err) return reject(err);
-        resolve(req);
-      });
-    });
+    // Parse the form data
+    const formData = await req.formData();
+    const id = formData.get("id");
+    const img = formData.get("img");
 
-    await form;
-    const img = req.file;
-    const { id } = req.body;
-
+    // Validate required fields
     if (!id) {
-      return NextResponse.json(
+      return Response.json(
         { message: "Subcategory ID is required!" },
         { status: 400 }
       );
     }
 
+    if (!img) {
+      return Response.json({ message: "No image provided!" }, { status: 400 });
+    }
+
+    // Find the subcategory in the database
     const subCategory = await ProductSubCategoryModel.findById(id);
 
     if (!subCategory) {
-      return NextResponse.json(
+      return Response.json(
         { message: "Subcategory not found!" },
         { status: 404 }
       );
     }
 
-    if (img) {
-      subCategory.img = `/uploads/${img.filename}`;
-      await subCategory.save();
-    }
+    // Process the new image
+    const buffer = Buffer.from(await img.arrayBuffer());
+    const filename = `${Date.now()}-${img.name}`;
+    const imgPath = path.join(process.cwd(), "public/uploads/", filename);
 
-    return NextResponse.json(
-      { message: "Subcategory updated successfully!", data: subCategory },
+    // Save the new image
+    await writeFile(imgPath, buffer);
+
+    // Update the subcategory image
+    subCategory.img = `/uploads/${filename}`;
+    await subCategory.save();
+
+    // Return success response
+    return Response.json(
+      { message: "Subcategory image updated successfully!", data: subCategory },
       { status: 200 }
     );
   } catch (err) {
-    console.error("Error updating subcategory:", err);
-    return NextResponse.json({ message: err.message }, { status: 500 });
+    console.error("Error updating subcategory image:", err);
+    return Response.json({ message: err.message }, { status: 500 });
   }
 }
 
-// GET Handler for fetching all subcategories
+// GET: Retrieve all product subcategories
 export async function GET() {
   try {
+    // Connect to the database and fetch subcategories
+    connectToDB();
     const subCategories = await ProductSubCategoryModel.find(
       {},
       "-__v"
     ).populate("productCategory", "title");
-    return NextResponse.json(subCategories, { status: 200 });
+
+    // Return subcategories in the response
+    return Response.json(subCategories, { status: 200 });
   } catch (err) {
     console.error("Error fetching subcategories:", err);
-    return NextResponse.json({ message: err.message }, { status: 500 });
+    return Response.json({ message: err.message }, { status: 500 });
   }
 }
