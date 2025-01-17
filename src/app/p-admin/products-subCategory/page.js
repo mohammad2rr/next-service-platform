@@ -18,7 +18,7 @@ const page = async () => {
         <div className="container">
           <div className="row">
             <div className="col-12">
-              <Accordion activeIndex={0}>
+              <Accordion activeIndex={1}>
                 <AccordionTab header="ایجاد زیر دسته محصولات">
                   <AddProductSubCategory />
                 </AccordionTab>
