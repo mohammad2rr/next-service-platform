@@ -15,11 +15,12 @@ export async function POST(req) {
     const price = formData.get("price");
     const shortDescription = formData.get("shortDescription");
     const longDescription = formData.get("longDescription");
+    const subCategory = formData.get("subCategory");
     const tags = formData.get("tags");
     const img = formData.get("img");
 
     // Validate required fields
-    if (!name || !price || !img) {
+    if (!name || !price || !img || !subCategory) {
       return Response.json(
         { message: "All fields are required!" },
         { status: 400 }
@@ -41,6 +42,7 @@ export async function POST(req) {
       price,
       shortDescription,
       longDescription,
+      subCategory,
       tags,
       img: imgUrl,
     });
