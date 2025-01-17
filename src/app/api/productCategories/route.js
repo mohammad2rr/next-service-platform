@@ -1,50 +1,35 @@
-import connectToDB from "@/configs/db";
-import ProductCategoryModel from "@/models/ProductCategory";
-import multer from "multer";
-import path from "path";
 import { NextResponse } from "next/server";
+import path from "path";
+import fs from "fs";
+import ProductCategoryModel from "@/models/ProductCategory";
+import { IncomingForm } from "formidable";
 
-// Set up Multer for file upload
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, path.join(process.cwd(), "public/uploads/"));
-    },
-    filename: function (req, file, cb) {
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      cb(null, uniqueSuffix + "-" + file.originalname);
-    },
-  }),
-  fileFilter: function (req, file, cb) {
-    const allowedMimeTypes = ["image/jpeg", "image/png", "image/jpg"];
-    if (allowedMimeTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error("Invalid file type. Only JPEG and PNG are allowed."));
-    }
-  },
-});
-
-// Middleware to handle multipart form-data
 export const config = {
   api: {
     bodyParser: false, // Disable built-in body parser for file upload
   },
 };
 
-// POST Handler for creating a category
 export async function POST(req) {
   try {
-    const form = new Promise((resolve, reject) => {
-      upload.single("img")(req, {}, (err) => {
-        if (err) return reject(err);
-        resolve(req);
+    const form = new IncomingForm({
+      uploadDir: path.join(process.cwd(), "public/uploads/"),
+      keepExtensions: true,
+      filename: (name, ext, part) => {
+        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+        return `${uniqueSuffix}-${part.originalFilename}`;
+      },
+    });
+
+    const { fields, files } = await new Promise((resolve, reject) => {
+      form.parse(req, (err, fields, files) => {
+        if (err) reject(err);
+        resolve({ fields, files });
       });
     });
 
-    await form;
-    const { title, description } = req.body;
-    const img = req.file;
+    const { title, description } = fields;
+    const img = files.img;
 
     // Validate required fields
     if (!title) {
@@ -57,7 +42,7 @@ export async function POST(req) {
     const category = await ProductCategoryModel.create({
       title,
       description,
-      img: img ? `/uploads/${img.filename}` : null, // Save relative path for serving
+      img: img ? `/uploads/${path.basename(img.filepath)}` : null, // Save relative path for serving
     });
 
     return NextResponse.json(
