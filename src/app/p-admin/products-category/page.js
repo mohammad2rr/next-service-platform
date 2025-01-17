@@ -1,6 +1,7 @@
 import React from "react";
 import Layout from "@/components/layouts/AdminPanelLayout";
 import connectToDB from "@/configs/db";
+import AddProductCategory from "@/components/templates/p-admin/products-category/AddProduct-category";
 
 import { Accordion, AccordionTab } from "primereact/accordion";
 
@@ -15,10 +16,7 @@ const page = async () => {
             <div className="col-12">
               <Accordion activeIndex={0}>
                 <AccordionTab header="ایجاد دسته بندی محصولات">
-                  <p className="m-0">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                    do
-                  </p>
+                  <AddProductCategory />
                 </AccordionTab>
               </Accordion>
             </div>
